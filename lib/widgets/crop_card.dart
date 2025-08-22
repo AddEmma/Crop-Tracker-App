@@ -31,14 +31,27 @@ class CropCard extends StatelessWidget {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    width: 48,
+                    height: 48,
                     decoration: BoxDecoration(
                       color: Theme.of(context).primaryColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(
-                      Icons.agriculture,
-                      color: Theme.of(context).primaryColor,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.asset(
+                        'assets/icons/crop.jpg',
+                        width: 48,
+                        height: 48,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          // Fallback to agriculture icon if image fails to load
+                          return Icon(
+                            Icons.agriculture,
+                            color: Theme.of(context).primaryColor,
+                          );
+                        },
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -48,9 +61,8 @@ class CropCard extends StatelessWidget {
                       children: [
                         Text(
                           crop.name,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -83,11 +95,7 @@ class CropCard extends StatelessWidget {
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Icon(
-                    Icons.event,
-                    size: 16,
-                    color: Colors.grey.shade600,
-                  ),
+                  Icon(Icons.event, size: 16, color: Colors.grey.shade600),
                   const SizedBox(width: 4),
                   Text(
                     'Harvest: ${DateFormat('MMM dd, yyyy').format(crop.expectedHarvestDate)}',
@@ -108,9 +116,9 @@ class CropCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   crop.notes,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.grey.shade600,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -125,7 +133,7 @@ class CropCard extends StatelessWidget {
   String _getDaysText() {
     final now = DateTime.now();
     final difference = crop.expectedHarvestDate.difference(now).inDays;
-    
+
     if (crop.status == CropStatus.harvested) {
       return 'Harvested';
     } else if (difference < 0) {
@@ -141,10 +149,10 @@ class CropCard extends StatelessWidget {
     if (crop.status == CropStatus.harvested) {
       return const Color(0xFF8D6E63);
     }
-    
+
     final now = DateTime.now();
     final difference = crop.expectedHarvestDate.difference(now).inDays;
-    
+
     if (difference < 0) {
       return Colors.red;
     } else if (difference <= 7) {

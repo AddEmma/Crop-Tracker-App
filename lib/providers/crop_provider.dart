@@ -7,12 +7,18 @@ class CropProvider with ChangeNotifier {
   List<Crop> _crops = [];
   List<Crop> _filteredCrops = [];
   String _searchQuery = '';
+  CropStatus? _statusFilter;
 
-  List<Crop> get crops => _filteredCrops.isEmpty && _searchQuery.isEmpty 
-      ? _crops 
-      : _filteredCrops;
+  // Updated getter that handles both search and filter
+  List<Crop> get crops {
+    if (_searchQuery.isEmpty && _statusFilter == null) {
+      return _crops;
+    }
+    return _filteredCrops;
+  }
 
   String get searchQuery => _searchQuery;
+  CropStatus? get statusFilter => _statusFilter;
 
   CropProvider() {
     _loadCrops();
@@ -23,7 +29,7 @@ class CropProvider with ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       final cropsJson = prefs.getStringList('crops') ?? [];
-      
+
       if (cropsJson.isEmpty) {
         _initializeMockData();
       } else {
@@ -31,7 +37,8 @@ class CropProvider with ChangeNotifier {
             .map((json) => Crop.fromJson(jsonDecode(json)))
             .toList();
       }
-      
+
+      _applyFilters(); // Apply current filters after loading
       notifyListeners();
     } catch (e) {
       _initializeMockData();
@@ -103,7 +110,7 @@ class CropProvider with ChangeNotifier {
   Future<void> addCrop(Crop crop) async {
     _crops.add(crop);
     await _saveCrops();
-    _applySearch();
+    _applyFilters(); // Apply current filters after adding
     notifyListeners();
   }
 
@@ -113,7 +120,7 @@ class CropProvider with ChangeNotifier {
     if (index != -1) {
       _crops[index] = updatedCrop;
       await _saveCrops();
-      _applySearch();
+      _applyFilters(); // Apply current filters after updating
       notifyListeners();
     }
   }
@@ -122,7 +129,7 @@ class CropProvider with ChangeNotifier {
   Future<void> deleteCrop(String id) async {
     _crops.removeWhere((crop) => crop.id == id);
     await _saveCrops();
-    _applySearch();
+    _applyFilters(); // Apply current filters after deleting
     notifyListeners();
   }
 
@@ -135,22 +142,62 @@ class CropProvider with ChangeNotifier {
     }
   }
 
-  // Search functionality
+  // Search functionality (updated to work with filters)
   void searchCrops(String query) {
     _searchQuery = query;
-    _applySearch();
+    _applyFilters();
     notifyListeners();
   }
 
-  void _applySearch() {
-    if (_searchQuery.isEmpty) {
-      _filteredCrops = [];
-    } else {
-      _filteredCrops = _crops
-          .where((crop) => crop.name
-              .toLowerCase()
-              .contains(_searchQuery.toLowerCase()))
-          .toList();
-    }
+  // NEW: Filter by status functionality
+  void filterByStatus(CropStatus? status) {
+    _statusFilter = status;
+    _applyFilters();
+    notifyListeners();
   }
+
+  // NEW: Clear all filters
+  void clearFilters() {
+    _searchQuery = '';
+    _statusFilter = null;
+    _applyFilters();
+    notifyListeners();
+  }
+
+  // Updated method that applies both search and status filters
+  void _applyFilters() {
+    if (_searchQuery.isEmpty && _statusFilter == null) {
+      _filteredCrops = [];
+      return;
+    }
+
+    _filteredCrops = _crops.where((crop) {
+      // Check search query
+      bool matchesSearch =
+          _searchQuery.isEmpty ||
+          crop.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          crop.notes.toLowerCase().contains(_searchQuery.toLowerCase());
+
+      // Check status filter
+      bool matchesStatus =
+          _statusFilter == null || crop.status == _statusFilter;
+
+      return matchesSearch && matchesStatus;
+    }).toList();
+  }
+
+  // NEW: Get crops count by status (useful for UI indicators)
+  Map<CropStatus, int> getCropCountByStatus() {
+    final Map<CropStatus, int> counts = {};
+    for (final status in CropStatus.values) {
+      counts[status] = _crops.where((crop) => crop.status == status).length;
+    }
+    return counts;
+  }
+
+  // NEW: Get total crops count
+  int get totalCropsCount => _crops.length;
+
+  // NEW: Get filtered crops count
+  int get filteredCropsCount => crops.length;
 }
