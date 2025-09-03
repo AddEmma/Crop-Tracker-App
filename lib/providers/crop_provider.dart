@@ -67,7 +67,7 @@ class CropProvider with ChangeNotifier {
         name: 'Tomatoes',
         plantingDate: now.subtract(const Duration(days: 30)),
         expectedHarvestDate: now.add(const Duration(days: 45)),
-        notes: 'Cherry tomatoes, need regular watering',
+        notes: 'Cherry tomatoes, need regular watering and organic fertilizer',
         status: CropStatus.growing,
       ),
       Crop(
@@ -75,7 +75,7 @@ class CropProvider with ChangeNotifier {
         name: 'Corn',
         plantingDate: now.subtract(const Duration(days: 60)),
         expectedHarvestDate: now.add(const Duration(days: 15)),
-        notes: 'Sweet corn variety',
+        notes: 'Sweet corn variety, planted in full sun area',
         status: CropStatus.ready,
       ),
       Crop(
@@ -83,7 +83,7 @@ class CropProvider with ChangeNotifier {
         name: 'Carrots',
         plantingDate: now.subtract(const Duration(days: 90)),
         expectedHarvestDate: now.subtract(const Duration(days: 10)),
-        notes: 'Orange carrots, harvested last week',
+        notes: 'Orange carrots, harvested last week, excellent yield',
         status: CropStatus.harvested,
       ),
       Crop(
@@ -91,7 +91,7 @@ class CropProvider with ChangeNotifier {
         name: 'Lettuce',
         plantingDate: now.subtract(const Duration(days: 20)),
         expectedHarvestDate: now.add(const Duration(days: 25)),
-        notes: 'Romaine lettuce for salads',
+        notes: 'Romaine lettuce for salads, growing in shade',
         status: CropStatus.growing,
       ),
       Crop(
@@ -99,7 +99,7 @@ class CropProvider with ChangeNotifier {
         name: 'Bell Peppers',
         plantingDate: now.subtract(const Duration(days: 45)),
         expectedHarvestDate: now.add(const Duration(days: 30)),
-        notes: 'Red and green bell peppers',
+        notes: 'Red and green bell peppers, need warm climate',
         status: CropStatus.growing,
       ),
     ];
@@ -142,21 +142,21 @@ class CropProvider with ChangeNotifier {
     }
   }
 
-  // Search functionality (updated to work with filters)
+  // Search functionality - searches only in notes
   void searchCrops(String query) {
-    _searchQuery = query;
+    _searchQuery = query.trim();
     _applyFilters();
     notifyListeners();
   }
 
-  // NEW: Filter by status functionality
+  // Filter by status functionality
   void filterByStatus(CropStatus? status) {
     _statusFilter = status;
     _applyFilters();
     notifyListeners();
   }
 
-  // NEW: Clear all filters
+  // Clear all filters
   void clearFilters() {
     _searchQuery = '';
     _statusFilter = null;
@@ -164,7 +164,7 @@ class CropProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Updated method that applies both search and status filters
+  // Enhanced method that applies both search and status filters
   void _applyFilters() {
     if (_searchQuery.isEmpty && _statusFilter == null) {
       _filteredCrops = [];
@@ -172,11 +172,14 @@ class CropProvider with ChangeNotifier {
     }
 
     _filteredCrops = _crops.where((crop) {
-      // Check search query
-      bool matchesSearch =
-          _searchQuery.isEmpty ||
-          crop.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          crop.notes.toLowerCase().contains(_searchQuery.toLowerCase());
+      // Check search query - searches both name and notes
+      bool matchesSearch = true;
+      if (_searchQuery.isNotEmpty) {
+        final query = _searchQuery.toLowerCase();
+        final nameMatch = crop.name.toLowerCase().contains(query);
+        final notesMatch = crop.notes.toLowerCase().contains(query);
+        matchesSearch = nameMatch || notesMatch;
+      }
 
       // Check status filter
       bool matchesStatus =
@@ -186,7 +189,7 @@ class CropProvider with ChangeNotifier {
     }).toList();
   }
 
-  // NEW: Get crops count by status (useful for UI indicators)
+  // Get crops count by status (useful for UI indicators)
   Map<CropStatus, int> getCropCountByStatus() {
     final Map<CropStatus, int> counts = {};
     for (final status in CropStatus.values) {
@@ -195,9 +198,9 @@ class CropProvider with ChangeNotifier {
     return counts;
   }
 
-  // NEW: Get total crops count
+  // Get total crops count
   int get totalCropsCount => _crops.length;
 
-  // NEW: Get filtered crops count
+  // Get filtered crops count
   int get filteredCropsCount => crops.length;
 }

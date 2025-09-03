@@ -140,7 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
-                    hintText: 'Search crops...',
+                    hintText: 'Search by notes...',
                     prefixIcon: const Icon(Icons.search),
                     suffixIcon: Row(
                       mainAxisSize: MainAxisSize.min,
